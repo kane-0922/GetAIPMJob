@@ -19,6 +19,7 @@ from tools.resume_parser_tool import parse_resume
 from tools.company_research_tool import research_company
 from tools.knowledge_qa_tool import search_knowledge
 from tools.knowledge_graph_tool import query_knowledge_graph
+from tools.user_profile_tool import save_user_profile, get_user_profile, update_learning_progress, save_interview_record
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +76,10 @@ def build_agent(ctx=None):
         default_headers=default_headers(ctx) if ctx else {},
     )
 
-    tools = [parse_resume, research_company, search_knowledge, query_knowledge_graph]
+    tools = [
+        parse_resume, research_company, search_knowledge, query_knowledge_graph,
+        save_user_profile, get_user_profile, update_learning_progress, save_interview_record
+    ]
 
     agent = create_agent(
         model=llm,
