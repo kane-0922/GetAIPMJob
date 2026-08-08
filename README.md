@@ -1,4 +1,5 @@
-# 在线访问：code.coze.cn/web-sdk/7671105250899689535 (本项目基于扣子平台搭建)
+# 在线访问：
+[code.coze.cn/web-sdk/7671105250899689535](https://code.coze.cn/web-sdk/7671105250899689535) (本项目基于扣子平台搭建)
 
 # GetAIPMJob — AI产品经理求职助手
 
