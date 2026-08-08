@@ -18,6 +18,7 @@ from storage.memory.memory_saver import get_memory_saver
 from tools.resume_parser_tool import parse_resume
 from tools.company_research_tool import research_company
 from tools.knowledge_qa_tool import search_knowledge
+from tools.knowledge_graph_tool import query_knowledge_graph
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ def build_agent(ctx=None):
         default_headers=default_headers(ctx) if ctx else {},
     )
 
-    tools = [parse_resume, research_company, search_knowledge]
+    tools = [parse_resume, research_company, search_knowledge, query_knowledge_graph]
 
     agent = create_agent(
         model=llm,
