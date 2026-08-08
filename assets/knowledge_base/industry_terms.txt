@@ -1,0 +1,104 @@
+AI产品行业术语词典
+==================
+
+核心AI术语
+----------
+LLM (Large Language Model): 大语言模型，基于Transformer架构的大规模预训练语言模型。
+Transformer: 一种基于自注意力机制的深度学习架构，是当前大多数LLM的基础。
+Token: 模型处理文本的最小单位，可以是一个字、词或子词。
+Embedding: 将文本、图像等数据映射到低维连续向量空间的技术。
+Fine-tuning: 在预训练模型基础上使用特定数据继续训练以适配特定任务。
+Prompt: 输入给大语言模型的提示文本，用于引导模型生成期望的输出。
+Prompt Engineering: 设计和优化Prompt以提高模型输出质量的技术。
+Temperature: 控制模型输出随机性的参数，值越高输出越随机多样。
+Top-p (Nucleus Sampling): 从累积概率不超过p的最小token集合中采样。
+Context Window: 模型一次能处理的最大Token数量。
+Hallucination: 模型生成的看似合理但实际不正确或编造的内容。
+Inference: 模型根据输入生成输出的过程，即推理/预测阶段。
+Pre-training: 在大规模通用数据上训练模型的基础阶段。
+RLHF: 基于人类反馈的强化学习，用于对齐模型输出与人类偏好。
+
+NLP相关术语
+-----------
+NLU (Natural Language Understanding): 自然语言理解，让机器理解人类语言。
+NLG (Natural Language Generation): 自然语言生成，让机器生成人类语言。
+NER (Named Entity Recognition): 命名实体识别，识别文本中的人名、地名等实体。
+Sentiment Analysis: 情感分析，判断文本的情感倾向（正面/负面/中性）。
+Text Classification: 文本分类，将文本归入预定义类别。
+Machine Translation: 机器翻译，自动将一种语言翻译为另一种语言。
+Summarization: 文本摘要，自动生成文本的简短总结。
+Question Answering: 问答系统，根据上下文或知识回答用户问题。
+Dialogue System: 对话系统，能与用户进行多轮自然语言交互的系统。
+Intent Recognition: 意图识别，理解用户输入背后的目的和需求。
+Slot Filling: 槽位填充，从用户输入中提取关键信息字段。
+
+RAG与检索术语
+-------------
+RAG (Retrieval-Augmented Generation): 检索增强生成，结合检索和生成的技术架构。
+Vector Database: 向量数据库，专门存储和检索高维向量的数据库。
+Semantic Search: 语义搜索，基于语义理解而非关键词匹配的搜索方式。
+Chunking: 文档分块，将长文档切分为适合处理的小块。
+Similarity Score: 相似度分数，衡量两个向量之间的语义相似程度。
+Reranking: 重排序，对初步检索结果进行二次精排。
+Knowledge Graph: 知识图谱，用图结构表示实体及其关系的知识表示方式。
+GraphRAG: 结合知识图谱和RAG的技术，增强检索的结构性。
+ANN (Approximate Nearest Neighbor): 近似最近邻搜索算法。
+
+Agent相关术语
+-------------
+AI Agent: 智能代理，能自主感知、决策和执行的AI系统。
+Function Calling: 函数调用，LLM调用预定义工具函数的能力。
+Tool Use: 工具使用，Agent调用外部工具完成任务的能力。
+Planning: 规划，Agent将复杂任务分解为子任务的能力。
+ReAct: Reasoning+Acting框架，交替进行推理和行动的Agent范式。
+Multi-Agent: 多智能体系统，多个Agent协作完成复杂任务。
+Memory: 记忆系统，包括短期记忆（对话上下文）和长期记忆（持久化知识）。
+Orchestrator: 编排器，协调多个Agent或工具工作的控制组件。
+Autonomous Agent: 自主代理，能独立完成复杂任务而无需人工干预的Agent。
+
+产品与业务术语
+--------------
+MVP (Minimum Viable Product): 最小可行产品，验证核心假设的最简产品版本。
+PRD (Product Requirements Document): 产品需求文档。
+ROI (Return on Investment): 投资回报率。
+DAU/MAU: 日活跃用户数/月活跃用户数。
+Conversion Rate: 转化率，完成目标行为的用户比例。
+User Retention: 用户留存率，衡量用户持续使用产品的指标。
+A/B Testing: A/B测试，对比两个版本效果差异的实验方法。
+User Story: 用户故事，以用户视角描述的需求表达方式。
+Pain Point: 痛点，用户在现有方案中遇到的核心问题。
+Product-Market Fit: 产品市场匹配，产品满足市场需求的程度。
+
+模型评估术语
+------------
+Accuracy: 准确率，正确预测占总预测的比例。
+Precision: 精确率，预测为正的样本中实际为正的比例。
+Recall: 召回率，实际为正的样本中被正确预测的比例。
+F1 Score: F1分数，精确率和召回率的调和平均值。
+AUC-ROC: ROC曲线下面积，衡量模型区分正负样本的能力。
+BLEU: 用于评估机器翻译质量的指标。
+Perplexity: 困惑度，衡量语言模型预测能力的指标，越低越好。
+Latency: 延迟，从输入到获得输出的时间。
+Throughput: 吞吐量，单位时间内处理的请求数量。
+
+AI安全与伦理术语
+----------------
+Bias: 偏见，模型对某些群体的系统性偏差。
+Fairness: 公平性，确保AI系统对不同群体公平对待。
+Explainability: 可解释性，能理解和解释AI决策过程的能力。
+Prompt Injection: 提示注入攻击，通过恶意输入操控模型行为。
+Data Poisoning: 数据投毒，通过污染训练数据影响模型行为。
+Red Teaming: 红队测试，通过对抗性测试发现AI系统的安全漏洞。
+Alignment: 对齐，使AI系统的行为符合人类价值观和意图。
+Guardrails: 护栏，限制AI系统行为边界的安全机制。
+
+云计算与部署术语
+----------------
+GPU: 图形处理器，AI模型训练和推理的核心硬件。
+API (Application Programming Interface): 应用程序接口。
+Microservice: 微服务，将应用拆分为独立小型服务的架构方式。
+Container: 容器，轻量级的应用打包和运行环境。
+Edge Computing: 边缘计算，在靠近数据源的地方进行计算。
+Model Quantization: 模型量化，将模型参数从高精度转为低精度以减小体积。
+Model Distillation: 模型蒸馏，用大模型指导训练小模型的技术。
+Serverless: 无服务器架构，按需执行代码的云计算模式。
