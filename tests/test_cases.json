@@ -1,0 +1,316 @@
+{
+  "version": "1.0",
+  "description": "AI产品求职助手Agent自动化测试用例集",
+  "modules": {
+    "resume_parse": {
+      "description": "简历解析模块测试",
+      "cases": [
+        {
+          "id": "RP-001",
+          "name": "标准PDF简历解析",
+          "input": "请帮我解析这份简历 https://example.com/standard_resume.pdf",
+          "expected_intent": "resume_parse",
+          "expected_tool": "parse_resume",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["姓名", "教育", "经历", "技能"],
+            "response_not_contains": ["无法解析", "不支持"]
+          }
+        },
+        {
+          "id": "RP-002",
+          "name": "Word格式简历解析",
+          "input": "这是我的Word简历 https://example.com/resume.docx，帮我分析一下",
+          "expected_intent": "resume_parse",
+          "expected_tool": "parse_resume",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["解析", "简历"]
+          }
+        },
+        {
+          "id": "RP-003",
+          "name": "纯文本简历解析",
+          "input": "帮我解析这个txt简历 https://example.com/resume.txt",
+          "expected_intent": "resume_parse",
+          "expected_tool": "parse_resume",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true
+          }
+        },
+        {
+          "id": "RP-004",
+          "name": "无效URL优雅处理",
+          "input": "解析我的简历 https://invalid-url-404.com/resume.pdf",
+          "expected_intent": "resume_parse",
+          "expected_tool": "parse_resume",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["解析", "异常", "错误", "无法", "失败", "检查"],
+            "graceful_error": true
+          }
+        },
+        {
+          "id": "RP-005",
+          "name": "用户未提供URL时引导",
+          "input": "帮我解析一下我的简历",
+          "expected_intent": "resume_parse",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["URL", "链接", "文件", "提供", "上传"],
+            "guidance_given": true
+          }
+        }
+      ]
+    },
+    "jd_matching": {
+      "description": "JD匹配与诊断模块测试",
+      "cases": [
+        {
+          "id": "JD-001",
+          "name": "高匹配度JD分析",
+          "input": "我有3年AI产品经验，熟悉RAG和大模型，帮我分析这个JD：\nAI产品经理，要求：1.3年以上AI产品经验 2.熟悉NLP/大模型 3.有RAG落地经验 4.本科以上",
+          "expected_intent": "jd_matching",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["匹配", "评分", "分", "建议"],
+            "has_scoring": true,
+            "min_score": 70
+          }
+        },
+        {
+          "id": "JD-002",
+          "name": "低匹配度JD分析",
+          "input": "我是应届生，没有实习经验，帮我看看这个JD：\n高级AI产品总监，要求：5年以上经验，带过团队，有商业化成功案例",
+          "expected_intent": "jd_matching",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["匹配", "差距", "建议", "提升"],
+            "has_scoring": true,
+            "has_improvement_suggestions": true
+          }
+        },
+        {
+          "id": "JD-003",
+          "name": "JD分析无简历时引导",
+          "input": "帮我分析这个JD匹配度：AI产品经理，要求NLP经验",
+          "expected_intent": "jd_matching",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["简历", "经历", "背景", "提供"]
+          }
+        }
+      ]
+    },
+    "company_research": {
+      "description": "企业背调模块测试",
+      "cases": [
+        {
+          "id": "CR-001",
+          "name": "知名公司背调",
+          "input": "帮我查一下字节跳动的背景信息",
+          "expected_intent": "company_research",
+          "expected_tool": "research_company",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["字节跳动", "规模", "业务", "建议"],
+            "has_recommendation": true
+          }
+        },
+        {
+          "id": "CR-002",
+          "name": "创业公司背调",
+          "input": "帮我查一下月之暗面这家公司怎么样",
+          "expected_intent": "company_research",
+          "expected_tool": "research_company",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["月之暗面", "建议"]
+          }
+        },
+        {
+          "id": "CR-003",
+          "name": "带投递建议的背调",
+          "input": "帮我调查一下商汤科技，我准备投递他们的AI产品经理岗位",
+          "expected_intent": "company_research",
+          "expected_tool": "research_company",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["建议", "投递", "商汤"]
+          }
+        }
+      ]
+    },
+    "knowledge_qa": {
+      "description": "专业知识问答模块测试",
+      "cases": [
+        {
+          "id": "KQ-001",
+          "name": "知识库核心概念问答",
+          "input": "什么是Agent？它和传统的聊天机器人有什么区别？",
+          "expected_intent": "knowledge_qa",
+          "expected_tool": "search_knowledge",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["Agent", "规划", "工具", "记忆"]
+          }
+        },
+        {
+          "id": "KQ-002",
+          "name": "RAG技术问答",
+          "input": "RAG系统的核心组件有哪些？如何评估RAG的效果？",
+          "expected_intent": "knowledge_qa",
+          "expected_tool": "search_knowledge",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["RAG", "检索", "向量", "评估"]
+          }
+        },
+        {
+          "id": "KQ-003",
+          "name": "行业术语解释",
+          "input": "解释一下什么是Prompt Engineering和Few-Shot Learning",
+          "expected_intent": "knowledge_qa",
+          "expected_tool": "search_knowledge",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["Prompt", "Few-Shot"]
+          }
+        },
+        {
+          "id": "KQ-004",
+          "name": "知识图谱学习路径",
+          "input": "我想学习大模型产品设计，帮我规划学习路径",
+          "expected_intent": "knowledge_qa",
+          "expected_tool": "query_knowledge_graph",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["学习", "路径", "前置"]
+          }
+        },
+        {
+          "id": "KQ-005",
+          "name": "职业规划查询",
+          "input": "AI产品经理的职业发展路径是什么样的？",
+          "expected_intent": "knowledge_qa",
+          "expected_tool": "query_knowledge_graph",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["职业", "路径", "阶段", "技能"]
+          }
+        }
+      ]
+    },
+    "mock_interview": {
+      "description": "模拟面试模块测试",
+      "cases": [
+        {
+          "id": "MI-001",
+          "name": "校招身份启动面试",
+          "input": "我想开始模拟面试，我是校招求职者",
+          "expected_intent": "mock_interview",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["面试", "问题", "自我介绍"],
+            "difficulty_level": "campus",
+            "interview_started": true
+          }
+        },
+        {
+          "id": "MI-002",
+          "name": "社招身份启动面试",
+          "input": "我有3年工作经验，想模拟面试AI产品经理社招岗位",
+          "expected_intent": "mock_interview",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["面试", "问题"],
+            "difficulty_level": "social",
+            "interview_started": true
+          }
+        },
+        {
+          "id": "MI-003",
+          "name": "实习身份启动面试",
+          "input": "我是找实习的同学，帮我模拟面试AI产品经理实习岗位",
+          "expected_intent": "mock_interview",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["面试", "问题"],
+            "difficulty_level": "internship",
+            "interview_started": true
+          }
+        },
+        {
+          "id": "MI-004",
+          "name": "面试中结束面试",
+          "input": "结束面试，帮我生成评价报告",
+          "expected_intent": "mock_interview_end",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["评价", "报告", "维度", "建议"],
+            "has_evaluation_report": true
+          }
+        }
+      ]
+    },
+    "general": {
+      "description": "通用能力与边界测试",
+      "cases": [
+        {
+          "id": "GN-001",
+          "name": "打招呼友好回复",
+          "input": "你好",
+          "expected_intent": "general_chat",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["你好", "帮助", "功能"],
+            "no_tool_called": true
+          }
+        },
+        {
+          "id": "GN-002",
+          "name": "功能咨询",
+          "input": "你能帮我做什么？",
+          "expected_intent": "general_chat",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["简历", "JD", "面试", "企业", "知识"]
+          }
+        },
+        {
+          "id": "GN-003",
+          "name": "超出范围问题引导",
+          "input": "帮我写一段Python代码实现快速排序",
+          "expected_intent": "out_of_scope",
+          "expected_tool": null,
+          "eval_criteria": {
+            "response_contains": ["抱歉", "不在", "范围", "帮助", "功能"],
+            "guidance_given": true
+          }
+        }
+      ]
+    }
+  }
+}
