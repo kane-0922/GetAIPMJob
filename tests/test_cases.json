@@ -449,7 +449,7 @@
           "name": "面试后保存记录",
           "input": "结束面试，帮我生成评价报告并记录到我的学习档案",
           "expected_intent": "mock_interview_end",
-          "expected_tool": null,
+          "expected_tool": "save_interview_record",
           "eval_criteria": {
             "intent_correct": true,
             "response_contains": ["评价", "报告", "记录", "档案"],
