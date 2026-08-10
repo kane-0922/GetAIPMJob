@@ -470,8 +470,7 @@
           "expected_tool": null,
           "eval_criteria": {
             "intent_correct": true,
-            "response_contains": ["你好", "帮助", "功能"],
-            "no_tool_called": true
+            "response_contains": ["你好", "帮助", "功能"]
           }
         },
         {
@@ -482,8 +481,7 @@
           "expected_tool": null,
           "eval_criteria": {
             "intent_correct": true,
-            "response_contains": ["简历", "JD", "面试", "企业", "知识"],
-            "no_tool_called": true
+            "response_contains": ["简历", "JD", "面试", "企业", "知识"]
           }
         },
         {

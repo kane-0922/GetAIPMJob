@@ -206,6 +206,18 @@ class HarnessEngine:
         # 6. 异常处理
         result.scores["graceful_error"] = self._eval_graceful_error(case, agent_output, error_msg)
 
+        # 7. 面试难度匹配（如果有）
+        if "difficulty_level" in criteria:
+            result.scores["difficulty_match"] = self._eval_difficulty(case, agent_output)
+
+        # 8. 面试启动检查（如果有）
+        if "interview_started" in criteria:
+            result.scores["interview_start"] = self._eval_interview_start(case, agent_output)
+
+        # 9. 引导检查（如果有）
+        if "guidance_given" in criteria:
+            result.scores["guidance"] = self._eval_guidance(case, agent_output)
+
         # 加权总分
         result.total_score = sum(
             result.scores.get(k, 0) * w
@@ -288,24 +300,38 @@ class HarnessEngine:
         return 30  # 调用了错误的工具
 
     def _eval_content(self, case: dict, output: str) -> float:
-        """评估内容完整性（关键词覆盖）"""
+        """评估内容完整性（关键词覆盖 + 禁词检查）"""
         criteria = case.get("eval_criteria", {})
         response_contains = criteria.get("response_contains", [])
+        response_not_contains = criteria.get("response_not_contains", [])
 
-        if not response_contains:
+        if not response_contains and not response_not_contains:
             return 80  # 无关键词要求时给基础分
 
         if not output:
             return 0
 
         output_lower = output.lower()
-        matched = sum(
-            1 for kw in response_contains
-            if kw.lower() in output_lower
-        )
 
-        coverage = matched / len(response_contains) if response_contains else 1.0
-        return min(100, coverage * 100)
+        # 正向关键词覆盖
+        if response_contains:
+            matched = sum(
+                1 for kw in response_contains
+                if kw.lower() in output_lower
+            )
+            coverage = matched / len(response_contains)
+        else:
+            coverage = 1.0
+
+        # 禁词检查：出现禁词则扣分
+        penalty = 0
+        if response_not_contains:
+            for kw in response_not_contains:
+                if kw.lower() in output_lower:
+                    penalty += 25  # 每个禁词扣25分
+
+        score = min(100, coverage * 100) - penalty
+        return max(0, score)
 
     def _eval_format(self, case: dict, output: str) -> float:
         """评估格式规范性"""
@@ -326,6 +352,19 @@ class HarnessEngine:
             else:
                 score -= 10
 
+        # 检查评分是否满足最低分要求
+        min_score = criteria.get("min_score")
+        if min_score is not None:
+            score_match = re.search(r'(\d+)\s*分', output)
+            if score_match:
+                actual_score = int(score_match.group(1))
+                if actual_score >= min_score:
+                    score += 10
+                else:
+                    score -= 20  # 评分低于要求
+            else:
+                score -= 10  # 未找到评分
+
         # 检查是否有改进建议（如果要求）
         if criteria.get("has_improvement_suggestions"):
             if any(kw in output for kw in ["建议", "改进", "提升", "优化"]):
@@ -336,7 +375,12 @@ class HarnessEngine:
             if any(kw in output for kw in ["评价", "报告", "维度", "综合"]):
                 score += 10
 
-        return min(100, score)
+        # 检查是否有推荐/建议（如果要求）
+        if criteria.get("has_recommendation"):
+            if any(kw in output for kw in ["建议", "推荐", "可以", "应该"]):
+                score += 10
+
+        return min(100, max(0, score))
 
     def _eval_latency(self, latency_sec: float) -> float:
         """评估响应时延"""
@@ -373,6 +417,71 @@ class HarnessEngine:
             return 50
 
         return 80
+
+    def _eval_difficulty(self, case: dict, output: str) -> float:
+        """评估面试难度是否匹配要求"""
+        expected_difficulty = case.get("eval_criteria", {}).get("difficulty_level", "")
+        if not expected_difficulty:
+            return 80
+
+        output_lower = output.lower()
+
+        # 根据难度级别检查关键词
+        difficulty_keywords = {
+            "基础": ["基础", "简单", "入门", "了解", "概念", "什么是"],
+            "中等": ["经验", "项目", "设计", "优化", "分析", "如何"],
+            "高级": ["战略", "商业化", "架构", "深度", "复杂", "体系"],
+        }
+
+        expected_kws = difficulty_keywords.get(expected_difficulty, [])
+        if not expected_kws:
+            return 80
+
+        matched = sum(1 for kw in expected_kws if kw in output_lower)
+        if matched >= 2:
+            return 100
+        elif matched >= 1:
+            return 70
+        return 50
+
+    def _eval_interview_start(self, case: dict, output: str) -> float:
+        """评估面试是否正确启动"""
+        expected = case.get("eval_criteria", {}).get("interview_started", False)
+        if not expected:
+            return 80
+
+        output_lower = output.lower()
+
+        # 检查是否包含面试启动标志
+        start_indicators = ["面试", "面试官", "第1题", "第一个问题", "自我介绍", "开始"]
+        matched = sum(1 for kw in start_indicators if kw in output_lower)
+
+        if matched >= 2:
+            return 100
+        elif matched >= 1:
+            return 70
+        return 30
+
+    def _eval_guidance(self, case: dict, output: str) -> float:
+        """评估是否给出了正确的引导"""
+        expected = case.get("eval_criteria", {}).get("guidance_given", False)
+        if not expected:
+            return 80
+
+        output_lower = output.lower()
+
+        # 检查是否包含引导标志
+        guidance_indicators = [
+            "请提供", "请发送", "请上传", "请告诉我", "需要你",
+            "如何", "怎么", "可以", "建议", "帮助", "引导"
+        ]
+        matched = sum(1 for kw in guidance_indicators if kw in output_lower)
+
+        if matched >= 2:
+            return 100
+        elif matched >= 1:
+            return 70
+        return 30
 
     # ── 报告生成 ────────────────────────────────────────
 
