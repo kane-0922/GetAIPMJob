@@ -1,6 +1,6 @@
 {
-  "version": "1.0",
-  "description": "AI产品求职助手Agent自动化测试用例集",
+  "version": "2.0",
+  "description": "AI产品求职助手Agent自动化测试用例集（含LLM-as-Judge评估）",
   "modules": {
     "resume_parse": {
       "description": "简历解析模块测试",
@@ -27,7 +27,7 @@
           "eval_criteria": {
             "intent_correct": true,
             "tool_called": true,
-            "response_contains": ["解析", "简历"]
+            "response_contains": ["解析", "简历", "教育", "经历"]
           }
         },
         {
@@ -38,7 +38,8 @@
           "expected_tool": "parse_resume",
           "eval_criteria": {
             "intent_correct": true,
-            "tool_called": true
+            "tool_called": true,
+            "response_contains": ["解析", "简历"]
           }
         },
         {
@@ -65,6 +66,18 @@
             "response_contains": ["URL", "链接", "文件", "提供", "上传"],
             "guidance_given": true
           }
+        },
+        {
+          "id": "RP-006",
+          "name": "非简历文件识别",
+          "input": "帮我解析这个文件 https://example.com/contract.pdf",
+          "expected_intent": "resume_parse",
+          "expected_tool": "parse_resume",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["简历", "内容", "格式", "信息"]
+          }
         }
       ]
     },
@@ -79,7 +92,7 @@
           "expected_tool": null,
           "eval_criteria": {
             "intent_correct": true,
-            "response_contains": ["匹配", "评分", "分", "建议"],
+            "response_contains": ["匹配", "评分", "建议"],
             "has_scoring": true,
             "min_score": 70
           }
@@ -106,6 +119,17 @@
           "eval_criteria": {
             "intent_correct": true,
             "response_contains": ["简历", "经历", "背景", "提供"]
+          }
+        },
+        {
+          "id": "JD-004",
+          "name": "图片格式JD识别",
+          "input": "帮我看看这个JD截图里的岗位适合我吗 [图片]",
+          "expected_intent": "jd_matching",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["JD", "岗位", "匹配", "简历"]
           }
         }
       ]
@@ -135,7 +159,7 @@
           "eval_criteria": {
             "intent_correct": true,
             "tool_called": true,
-            "response_contains": ["月之暗面", "建议"]
+            "response_contains": ["月之暗面", "建议", "融资", "产品"]
           }
         },
         {
@@ -148,6 +172,31 @@
             "intent_correct": true,
             "tool_called": true,
             "response_contains": ["建议", "投递", "商汤"]
+          }
+        },
+        {
+          "id": "CR-004",
+          "name": "不存在的公司",
+          "input": "帮我查一下'宇宙无限科技有限公司'的背景",
+          "expected_intent": "company_research",
+          "expected_tool": "research_company",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["未找到", "无法", "信息", "公司"],
+            "graceful_error": true
+          }
+        },
+        {
+          "id": "CR-005",
+          "name": "模糊公司名查询",
+          "input": "帮我查一下'字节'这家公司",
+          "expected_intent": "company_research",
+          "expected_tool": "research_company",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["字节", "跳动"]
           }
         }
       ]
@@ -188,7 +237,7 @@
           "eval_criteria": {
             "intent_correct": true,
             "tool_called": true,
-            "response_contains": ["Prompt", "Few-Shot"]
+            "response_contains": ["Prompt", "Few-Shot", "提示", "示例"]
           }
         },
         {
@@ -213,6 +262,17 @@
             "intent_correct": true,
             "tool_called": true,
             "response_contains": ["职业", "路径", "阶段", "技能"]
+          }
+        },
+        {
+          "id": "KQ-006",
+          "name": "完全无关问题引导",
+          "input": "今天北京天气怎么样？",
+          "expected_intent": "out_of_scope",
+          "expected_tool": null,
+          "eval_criteria": {
+            "response_contains": ["抱歉", "不在", "范围", "帮助", "功能"],
+            "guidance_given": true
           }
         }
       ]
@@ -241,7 +301,7 @@
           "expected_tool": null,
           "eval_criteria": {
             "intent_correct": true,
-            "response_contains": ["面试", "问题"],
+            "response_contains": ["面试", "问题", "经验", "项目"],
             "difficulty_level": "social",
             "interview_started": true
           }
@@ -254,7 +314,7 @@
           "expected_tool": null,
           "eval_criteria": {
             "intent_correct": true,
-            "response_contains": ["面试", "问题"],
+            "response_contains": ["面试", "问题", "基础"],
             "difficulty_level": "internship",
             "interview_started": true
           }
@@ -269,6 +329,132 @@
             "intent_correct": true,
             "response_contains": ["评价", "报告", "维度", "建议"],
             "has_evaluation_report": true
+          }
+        },
+        {
+          "id": "MI-005",
+          "name": "面试中回答问题后追问",
+          "input": "我觉得RAG的核心是检索和生成两个步骤，检索阶段用向量数据库找到相关文档，生成阶段把文档作为上下文给大模型。",
+          "expected_intent": "mock_interview_answer",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["回答", "点评", "补充", "追问", "问题"],
+            "has_feedback": true,
+            "has_follow_up": true
+          }
+        },
+        {
+          "id": "MI-006",
+          "name": "面试中用户不回答",
+          "input": "这个问题我不太会，能换一个吗？",
+          "expected_intent": "mock_interview",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["没关系", "换", "问题", "鼓励"],
+            "has_encouragement": true
+          }
+        }
+      ]
+    },
+    "user_profile": {
+      "description": "用户画像持久化模块测试",
+      "cases": [
+        {
+          "id": "UP-001",
+          "name": "首次创建用户画像",
+          "input": "我叫Kane，大三计算机专业，想找AI产品实习，目前了解RAG但不熟悉Agent",
+          "expected_intent": "user_profile_save",
+          "expected_tool": "save_user_profile",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["Kane", "画像", "记录", "保存"],
+            "profile_saved": true
+          }
+        },
+        {
+          "id": "UP-002",
+          "name": "跨会话记忆验证",
+          "input": "你还记得我是谁吗？我的目标岗位是什么？",
+          "expected_intent": "user_profile_query",
+          "expected_tool": "get_user_profile",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["Kane", "实习", "AI产品", "计算机"],
+            "profile_recalled": true
+          }
+        },
+        {
+          "id": "UP-003",
+          "name": "更新用户技能",
+          "input": "我最近学了Agent设计，帮我更新一下技能清单",
+          "expected_intent": "user_profile_update",
+          "expected_tool": "save_user_profile",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["更新", "Agent", "技能"],
+            "profile_updated": true
+          }
+        },
+        {
+          "id": "UP-004",
+          "name": "画像驱动个性化推荐",
+          "input": "根据我的情况，帮我推荐接下来应该学什么",
+          "expected_intent": "knowledge_qa",
+          "expected_tool": "query_knowledge_graph",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["学习", "建议", "推荐", "技能"],
+            "personalized": true
+          }
+        }
+      ]
+    },
+    "e2e": {
+      "description": "跨模块端到端流程测试",
+      "cases": [
+        {
+          "id": "E2E-001",
+          "name": "简历解析后JD匹配",
+          "input": "先帮我解析简历 https://example.com/resume.pdf，然后分析这个JD匹配度：AI产品经理，要求RAG经验",
+          "expected_intent": "resume_parse",
+          "expected_tool": "parse_resume",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["简历", "解析", "JD", "匹配"],
+            "multi_step": true
+          }
+        },
+        {
+          "id": "E2E-002",
+          "name": "背调后追问技术栈",
+          "input": "帮我查一下字节跳动的背景，然后告诉我他们AI产品用了什么技术栈",
+          "expected_intent": "company_research",
+          "expected_tool": "research_company",
+          "eval_criteria": {
+            "intent_correct": true,
+            "tool_called": true,
+            "response_contains": ["字节", "技术", "AI", "产品"],
+            "multi_step": true
+          }
+        },
+        {
+          "id": "E2E-003",
+          "name": "面试后保存记录",
+          "input": "结束面试，帮我生成评价报告并记录到我的学习档案",
+          "expected_intent": "mock_interview_end",
+          "expected_tool": null,
+          "eval_criteria": {
+            "intent_correct": true,
+            "response_contains": ["评价", "报告", "记录", "档案"],
+            "has_evaluation_report": true,
+            "record_saved": true
           }
         }
       ]
@@ -296,7 +482,8 @@
           "expected_tool": null,
           "eval_criteria": {
             "intent_correct": true,
-            "response_contains": ["简历", "JD", "面试", "企业", "知识"]
+            "response_contains": ["简历", "JD", "面试", "企业", "知识"],
+            "no_tool_called": true
           }
         },
         {
