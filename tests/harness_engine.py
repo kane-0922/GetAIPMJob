@@ -1,14 +1,19 @@
 """
 Harness Engine - Agent自动化测试评分引擎
-支持多维度评估：意图识别、工具调用、回答质量、格式规范、响应时延
+支持两种评估模式：
+1. 规则评估（keyword matching）- 快速、低成本
+2. LLM-as-Judge评估 - 智能、准确
 """
 import os
 import re
 import json
 import time
+import logging
 import traceback
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 # ── 评分维度权重 ──────────────────────────────────────────
 WEIGHTS = {
@@ -18,6 +23,15 @@ WEIGHTS = {
     "format_quality": 0.15,     # 格式规范性
     "response_latency": 0.10,   # 响应时延（归一化）
     "graceful_error": 0.10,     # 异常处理优雅度
+}
+
+# LLM-as-Judge 维度权重（更精细）
+LLM_JUDGE_WEIGHTS = {
+    "intent_accuracy": 0.25,
+    "tool_correctness": 0.20,
+    "content_quality": 0.25,
+    "format_quality": 0.15,
+    "helpfulness": 0.15,
 }
 
 # 延迟评分阈值（秒）
@@ -60,12 +74,27 @@ class EvalResult:
 
 
 class HarnessEngine:
-    """Agent测试评分引擎"""
+    """Agent测试评分引擎，支持规则评估和LLM-as-Judge评估"""
 
-    def __init__(self):
+    def __init__(self, use_llm_judge: bool = False):
+        """
+        初始化测试引擎
+
+        Args:
+            use_llm_judge: 是否使用LLM-as-Judge评估（更准确但更慢）
+        """
         self.results: list[EvalResult] = []
         self.start_time = None
         self.end_time = None
+        self.use_llm_judge = use_llm_judge
+        self._llm_judge = None
+
+    def _get_llm_judge(self):
+        """延迟初始化LLM Judge"""
+        if self._llm_judge is None:
+            from tests.llm_judge import get_llm_judge
+            self._llm_judge = get_llm_judge()
+        return self._llm_judge
 
     # ── 核心评估方法 ────────────────────────────────────
 
@@ -76,7 +105,8 @@ class HarnessEngine:
         agent_output: str,
         tools_called: list[dict],
         latency_sec: float,
-        error_msg: str = ""
+        error_msg: str = "",
+        user_input: str = ""
     ) -> EvalResult:
         """评估单条测试用例"""
         result = EvalResult(
@@ -89,6 +119,73 @@ class HarnessEngine:
         result.latency_sec = latency_sec
         result.error_msg = error_msg
 
+        if self.use_llm_judge:
+            # 使用LLM-as-Judge评估
+            return self._evaluate_with_llm(case, result, user_input)
+        else:
+            # 使用规则评估
+            return self._evaluate_with_rules(case, result, agent_output, tools_called, latency_sec, error_msg)
+
+    def _evaluate_with_llm(
+        self,
+        case: dict,
+        result: EvalResult,
+        user_input: str
+    ) -> EvalResult:
+        """使用LLM-as-Judge评估"""
+        judge = self._get_llm_judge()
+
+        # 调用LLM评估
+        judge_result = judge.evaluate(
+            user_input=user_input or case.get("input", ""),
+            agent_output=result.agent_output,
+            scenario=case.get("name", ""),
+            expected_intent=case.get("expected_intent", ""),
+            expected_tool=case.get("expected_tool", ""),
+            actual_tools=result.tools_called,
+        )
+
+        # 映射LLM评分到标准维度
+        result.scores["intent_accuracy"] = judge_result["scores"].get("intent_accuracy", 70)
+        result.scores["tool_correctness"] = judge_result["scores"].get("tool_correctness", 70)
+        result.scores["content_completeness"] = judge_result["scores"].get("content_quality", 70)
+        result.scores["format_quality"] = judge_result["scores"].get("format_quality", 70)
+        result.scores["helpfulness"] = judge_result["scores"].get("helpfulness", 70)
+
+        # 时延评分仍用规则
+        result.scores["response_latency"] = self._eval_latency(result.latency_sec)
+
+        # 异常处理评分
+        if result.error_msg:
+            result.scores["graceful_error"] = 50 if not result.agent_output else 80
+        else:
+            result.scores["graceful_error"] = 80
+
+        # 使用LLM Judge的总分
+        result.total_score = judge_result["total_score"]
+        result.passed = judge_result["passed"]
+
+        # 记录详情
+        result.details = {
+            "evaluation_mode": "llm_judge",
+            "llm_reasons": judge_result.get("reasons", {}),
+            "overall_comment": judge_result.get("overall_comment", ""),
+            "expected_intent": case.get("expected_intent"),
+            "expected_tool": case.get("expected_tool"),
+        }
+
+        return result
+
+    def _evaluate_with_rules(
+        self,
+        case: dict,
+        result: EvalResult,
+        agent_output: str,
+        tools_called: list[dict],
+        latency_sec: float,
+        error_msg: str
+    ) -> EvalResult:
+        """使用规则评估（原有逻辑）"""
         criteria = case.get("eval_criteria", {})
 
         # 1. 意图识别准确率

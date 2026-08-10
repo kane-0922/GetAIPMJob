@@ -1,6 +1,6 @@
 """
 Agent自动化测试运行器
-用法: python tests/run_tests.py [--module MODULE] [--case-id CASE_ID] [--baseline] [--save-baseline]
+用法: python tests/run_tests.py [--module MODULE] [--case-id CASE_ID] [--baseline] [--save-baseline] [--llm-judge]
 """
 import os
 import sys
@@ -80,19 +80,28 @@ def run_test_suite(
     agent_builder,
     modules_filter: str = None,
     case_ids_filter: list = None,
+    use_llm_judge: bool = False,
 ) -> dict:
     """
     运行完整测试套件
+
+    Args:
+        agent_builder: Agent构建函数
+        modules_filter: 模块筛选
+        case_ids_filter: 用例ID筛选
+        use_llm_judge: 是否使用LLM-as-Judge评估
     """
-    engine = HarnessEngine()
+    engine = HarnessEngine(use_llm_judge=use_llm_judge)
     engine.start_time = datetime.now()
 
     test_data = load_test_cases()
     modules = test_data.get("modules", {})
 
     total_cases = sum(len(m.get("cases", [])) for m in modules.values())
+    eval_mode = "LLM-as-Judge" if use_llm_judge else "规则评估"
     print(f"\n🧪 开始执行Agent自动化测试...")
     print(f"   测试用例总数: {total_cases}")
+    print(f"   评估模式: {eval_mode}")
     if modules_filter:
         print(f"   筛选模块: {modules_filter}")
     if case_ids_filter:
@@ -124,7 +133,8 @@ def run_test_suite(
                 agent_output=test_result["output"],
                 tools_called=test_result["tools_called"],
                 latency_sec=test_result["latency_sec"],
-                error_msg=test_result["error"]
+                error_msg=test_result["error"],
+                user_input=case["input"]
             )
             engine.results.append(eval_result)
 
@@ -147,7 +157,7 @@ def save_baseline(report: dict, baseline_path: str = None):
     print(f"\n  💾 基线已保存: {baseline_path}")
 
 
-def run_regression(agent_builder, baseline_path: str = None) -> dict:
+def run_regression(agent_builder, baseline_path: str = None, use_llm_judge: bool = False) -> dict:
     """执行回归测试"""
     if baseline_path is None:
         baseline_path = os.path.join(project_root, "tests", "baseline_report.json")
@@ -155,10 +165,10 @@ def run_regression(agent_builder, baseline_path: str = None) -> dict:
     print("\n🔄 执行回归测试...")
 
     # 运行当前测试
-    current_report = run_test_suite(agent_builder)
+    current_report = run_test_suite(agent_builder, use_llm_judge=use_llm_judge)
 
     # 对比基线
-    engine = HarnessEngine()
+    engine = HarnessEngine(use_llm_judge=use_llm_judge)
     comparison = engine.compare_with_baseline(current_report, baseline_path)
 
     # 打印回归结果
@@ -202,6 +212,7 @@ def main():
     parser.add_argument("--baseline", action="store_true", help="与基线对比（回归测试）")
     parser.add_argument("--save-baseline", action="store_true", help="保存当前结果为基线")
     parser.add_argument("--quick", action="store_true", help="快速模式：只运行核心用例")
+    parser.add_argument("--llm-judge", action="store_true", help="使用LLM-as-Judge评估（更准确但更慢）")
     args = parser.parse_args()
 
     # 动态导入 agent builder
@@ -214,7 +225,7 @@ def main():
 
     if args.baseline:
         # 回归测试模式
-        comparison = run_regression(build_agent)
+        comparison = run_regression(build_agent, use_llm_judge=args.llm_judge)
         regressions = comparison.get("summary", {}).get("regressions", 0)
         if regressions > 0:
             print(f"\n⚠️ 发现 {regressions} 个回归项，请检查！")
@@ -227,10 +238,11 @@ def main():
             build_agent,
             modules_filter=args.module,
             case_ids_filter=args.case_id,
+            use_llm_judge=args.llm_judge,
         )
 
         # 保存报告
-        engine = HarnessEngine()
+        engine = HarnessEngine(use_llm_judge=args.llm_judge)
         engine.save_report(report)
 
         if args.save_baseline:
